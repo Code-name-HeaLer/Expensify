@@ -1,55 +1,76 @@
-// Stage 1, Tier 1: Home dashboard root placeholder screen.
+// Stage 3, Tier 1: Complete Home dashboard with summary header, sparkline, top categories, and quick add.
 
-import React from "react";
-import { Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, TYPOGRAPHY } from "../../constants/theme";
+import { DashboardHeader } from "../../components/dashboard/DashboardHeader";
+import { SpendTrendSparkline } from "../../components/dashboard/SpendTrendSparkline";
+import { TopCategoriesList } from "../../components/dashboard/TopCategoriesList";
+import { FloatingAddButton } from "../../components/shared/FloatingAddButton";
+import { QuickAddModal } from "../../components/transactions/QuickAddModal";
+import { COLORS } from "../../constants/theme";
+import { useDashboardSummary } from "../../hooks/useDashboardSummary";
+import { useSpendTrend } from "../../hooks/useSpendTrend";
+import { useTopCategories } from "../../hooks/useTopCategories";
 
 export default function HomeScreen() {
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20 }}>
-        <Text
-          style={{
-            fontSize: 13,
-            color: COLORS.textSecondary,
-            letterSpacing: 0.5,
-          }}
-        >
-          DASHBOARD
-        </Text>
-        <Text
-          style={[
-            {
-              fontSize: 32,
-              fontWeight: "700",
-              color: COLORS.textPrimary,
-              marginTop: 4,
-            },
-            TYPOGRAPHY.tabularNumbers,
-          ]}
-        >
-          ₹0.00
-        </Text>
-        <Text style={{ fontSize: 14, color: COLORS.textMuted, marginTop: 4 }}>
-          Safe to spend today
-        </Text>
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const { summary, refreshSummary } = useDashboardSummary();
+  const { trendData, maxSpend, refreshTrend } = useSpendTrend();
+  const { topCategories, refreshTopCategories } = useTopCategories();
 
-        <View
-          style={{
-            marginTop: 28,
-            padding: 16,
-            backgroundColor: COLORS.surface,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: COLORS.surfaceBorder,
-          }}
+  const handleRefreshAll = () => {
+    refreshSummary();
+    refreshTrend();
+    refreshTopCategories();
+  };
+
+  useEffect(() => {
+    handleRefreshAll();
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          <Text style={{ fontSize: 14, color: COLORS.textSecondary }}>
-            Foundation loaded. Ready for Stage 2 (Quick Logging Flow).
-          </Text>
-        </View>
+          {/* Hero Safe-To-Spend & Summary Header */}
+          <DashboardHeader summary={summary} />
+
+          {/* 14-Day Spend Trajectory Sparkline */}
+          <SpendTrendSparkline data={trendData} maxSpend={maxSpend} />
+
+          {/* Top 3 Expense Categories */}
+          <TopCategoriesList categories={topCategories} />
+        </ScrollView>
+
+        {/* Floating Quick Add Button */}
+        <FloatingAddButton onPress={() => setIsAddModalVisible(true)} />
+
+        {/* Quick Add Bottom Sheet Modal */}
+        <QuickAddModal
+          visible={isAddModalVisible}
+          onClose={() => setIsAddModalVisible(false)}
+          onSaved={handleRefreshAll}
+        />
       </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 90,
+  },
+});

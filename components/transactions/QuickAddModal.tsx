@@ -1,14 +1,15 @@
-// Stage 2, Tier 1: Quick expense logging bottom sheet modal with keypad and category row.
+// Stage 7, Tier 4: Quick expense bottom sheet with 200ms success check animation and haptic feedback.
 
 import { Check, X } from "lucide-react-native";
-import React from "react";
+import React, { useState } from "react";
 import {
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Animated,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { COLORS, TYPOGRAPHY } from "../../constants/theme";
 import { useQuickAdd } from "../../hooks/useQuickAdd";
@@ -27,6 +28,9 @@ export function QuickAddModal({
   onClose,
   onSaved,
 }: QuickAddModalProps) {
+  const [isSuccessState, setIsSuccessState] = useState(false);
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
   const {
     amountStr,
     categories,
@@ -36,15 +40,43 @@ export function QuickAddModal({
     handleDelete,
     handleClear,
     saveExpense,
-  } = useQuickAdd(() => {
-    onSaved?.();
-    onClose();
-  });
+  } = useQuickAdd();
 
   const parsedAmount = parseFloat(amountStr) || 0;
-  const canSave = parsedAmount > 0 && selectedCategoryId !== null;
+  const canSave =
+    parsedAmount > 0 && selectedCategoryId !== null && !isSuccessState;
+
+  const handleSaveWithAnimation = () => {
+    if (!canSave) return;
+
+    setIsSuccessState(true);
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.96,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    const success = saveExpense();
+    if (success) {
+      setTimeout(() => {
+        setIsSuccessState(false);
+        onSaved?.();
+        onClose();
+      }, 220);
+    } else {
+      setIsSuccessState(false);
+    }
+  };
 
   const handleClose = () => {
+    setIsSuccessState(false);
     handleClear();
     onClose();
   };
@@ -60,7 +92,9 @@ export function QuickAddModal({
         <View style={styles.overlay} />
       </TouchableWithoutFeedback>
 
-      <View style={styles.sheetContainer}>
+      <Animated.View
+        style={[styles.sheetContainer, { transform: [{ scale: scaleAnim }] }]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Log Expense</Text>
@@ -72,7 +106,7 @@ export function QuickAddModal({
           </TouchableOpacity>
         </View>
 
-        {/* Hero Amount Display */}
+        {/* Amount Display */}
         <View style={styles.amountContainer}>
           <Text style={[styles.amountText, TYPOGRAPHY.tabularNumbers]}>
             {formatINR(parsedAmount, true)}
@@ -86,32 +120,38 @@ export function QuickAddModal({
           onSelectCategory={setSelectedCategoryId}
         />
 
-        {/* Numeric Keypad */}
+        {/* Keypad */}
         <NumericKeypad onKeyPress={handleKeyPress} onDelete={handleDelete} />
 
-        {/* Bottom Confirm Action */}
+        {/* Confirm Action Button */}
         <View style={styles.actionContainer}>
           <TouchableOpacity
-            activeOpacity={0.7}
+            activeOpacity={0.8}
             disabled={!canSave}
-            onPress={saveExpense}
-            style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}
+            onPress={handleSaveWithAnimation}
+            style={[
+              styles.saveButton,
+              isSuccessState && styles.saveButtonSuccess,
+              !canSave && !isSuccessState && styles.saveButtonDisabled,
+            ]}
           >
             <Check
               size={20}
-              color={canSave ? COLORS.background : COLORS.textMuted}
+              color={
+                canSave || isSuccessState ? COLORS.background : COLORS.textMuted
+              }
             />
             <Text
               style={[
                 styles.saveButtonText,
-                !canSave && styles.saveButtonTextDisabled,
+                !canSave && !isSuccessState && styles.saveButtonTextDisabled,
               ]}
             >
-              Save Expense
+              {isSuccessState ? "Saved" : "Save Expense"}
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -165,6 +205,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+  },
+  saveButtonSuccess: {
+    backgroundColor: COLORS.income,
   },
   saveButtonDisabled: {
     backgroundColor: COLORS.surfaceElevated,

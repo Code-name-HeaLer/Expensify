@@ -1,7 +1,14 @@
-// Stage 5, Tier 1 & 3: Compact 2-column category budget envelope tile with visual progress.
+// Stage 7, Tier 4: Compact 2-column envelope tile with spring press feedback and clean progress colors.
 
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import * as Haptics from "expo-haptics";
+import React, { useRef } from "react";
+import {
+  Animated,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { COLORS, TYPOGRAPHY } from "../../constants/theme";
 import { CategoryBudgetItem } from "../../hooks/useCategoryBudgets";
 import { formatINR } from "../../lib/currency";
@@ -13,6 +20,7 @@ interface CategoryBudgetCardProps {
 }
 
 export function CategoryBudgetCard({ item, onPress }: CategoryBudgetCardProps) {
+  const scale = useRef(new Animated.Value(1)).current;
   const hasBudget = item.monthlyLimit > 0;
 
   const getProgressColor = () => {
@@ -21,111 +29,139 @@ export function CategoryBudgetCard({ item, onPress }: CategoryBudgetCardProps) {
     return item.categoryColor;
   };
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.75}
-      onPress={() => onPress(item)}
-      style={[
-        styles.card,
-        {
-          backgroundColor: `${item.categoryColor}10`,
-          borderColor:
-            item.status === "exceeded"
-              ? `${COLORS.expense}70`
-              : `${item.categoryColor}35`,
-        },
-      ]}
-    >
-      {/* Top Header: Icon & Percentage Badge */}
-      <View style={styles.topRow}>
-        <View
-          style={[
-            styles.iconContainer,
-            {
-              backgroundColor: `${item.categoryColor}25`,
-              borderColor: `${item.categoryColor}50`,
-            },
-          ]}
-        >
-          <CategoryIcon
-            name={item.categoryIcon}
-            size={15}
-            color={item.categoryColor}
-          />
-        </View>
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      bounciness: 0,
+    }).start();
+  };
 
-        {hasBudget ? (
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 4,
+    }).start();
+  };
+
+  const handlePress = () => {
+    try {
+      Haptics.selectionAsync();
+    } catch {}
+    onPress(item);
+  };
+
+  return (
+    <TouchableWithoutFeedback
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
+    >
+      <Animated.View
+        style={[
+          styles.card,
+          {
+            transform: [{ scale }],
+            backgroundColor: `${item.categoryColor}10`,
+            borderColor:
+              item.status === "exceeded"
+                ? `${COLORS.expense}70`
+                : `${item.categoryColor}35`,
+          },
+        ]}
+      >
+        {/* Top: Icon & Percentage Badge */}
+        <View style={styles.topRow}>
           <View
             style={[
-              styles.percentageBadge,
+              styles.iconContainer,
               {
-                backgroundColor:
-                  item.status === "exceeded"
-                    ? `${COLORS.expense}25`
-                    : item.status === "warning"
-                      ? `${COLORS.warning}25`
-                      : `${item.categoryColor}20`,
+                backgroundColor: `${item.categoryColor}25`,
+                borderColor: `${item.categoryColor}50`,
               },
             ]}
           >
-            <Text
+            <CategoryIcon
+              name={item.categoryIcon}
+              size={15}
+              color={item.categoryColor}
+            />
+          </View>
+
+          {hasBudget ? (
+            <View
               style={[
-                styles.percentageText,
-                { color: getProgressColor() },
-                TYPOGRAPHY.tabularNumbers,
+                styles.percentageBadge,
+                {
+                  backgroundColor:
+                    item.status === "exceeded"
+                      ? `${COLORS.expense}25`
+                      : item.status === "warning"
+                        ? `${COLORS.warning}25`
+                        : `${item.categoryColor}20`,
+                },
               ]}
             >
-              {item.percentage}%
+              <Text
+                style={[
+                  styles.percentageText,
+                  { color: getProgressColor() },
+                  TYPOGRAPHY.tabularNumbers,
+                ]}
+              >
+                {item.percentage}%
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.setCapText}>+ Set Cap</Text>
+          )}
+        </View>
+
+        {/* Center: Category Title & Spent Hero */}
+        <View style={styles.middleSection}>
+          <Text style={styles.categoryName} numberOfLines={1}>
+            {item.categoryName}
+          </Text>
+          <Text style={[styles.spentAmount, TYPOGRAPHY.tabularNumbers]}>
+            {formatINR(item.spentAmount)}
+          </Text>
+        </View>
+
+        {/* Bottom: Progress Bar */}
+        {hasBudget ? (
+          <View style={styles.bottomSection}>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.min(100, item.percentage)}%`,
+                    backgroundColor: getProgressColor(),
+                  },
+                ]}
+              />
+            </View>
+            <Text
+              style={[
+                styles.limitCaption,
+                item.status === "exceeded" && { color: COLORS.expense },
+                TYPOGRAPHY.tabularNumbers,
+              ]}
+              numberOfLines={1}
+            >
+              {item.status === "exceeded"
+                ? `Over by ${formatINR(item.spentAmount - item.monthlyLimit)}`
+                : `${formatINR(item.remainingAmount)} left`}
             </Text>
           </View>
         ) : (
-          <Text style={styles.setCapText}>+ Set Cap</Text>
-        )}
-      </View>
-
-      {/* Middle: Category Title & Spent Hero */}
-      <View style={styles.middleSection}>
-        <Text style={styles.categoryName} numberOfLines={1}>
-          {item.categoryName}
-        </Text>
-        <Text style={[styles.spentAmount, TYPOGRAPHY.tabularNumbers]}>
-          {formatINR(item.spentAmount)}
-        </Text>
-      </View>
-
-      {/* Bottom: Progress Bar & Remaining / Limit */}
-      {hasBudget ? (
-        <View style={styles.bottomSection}>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${Math.min(100, item.percentage)}%`,
-                  backgroundColor: getProgressColor(),
-                },
-              ]}
-            />
+          <View style={styles.unbudgetedRow}>
+            <Text style={styles.unbudgetedCaption}>No limit configured</Text>
           </View>
-          <Text
-            style={[
-              styles.limitCaption,
-              item.status === "exceeded" && { color: COLORS.expense },
-              TYPOGRAPHY.tabularNumbers,
-            ]}
-            numberOfLines={1}
-          >
-            {item.status === "exceeded"
-              ? `Over by ${formatINR(item.spentAmount - item.monthlyLimit)}`
-              : `${formatINR(item.remainingAmount)} left`}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.unbudgetedRow}>
-          <Text style={styles.unbudgetedCaption}>No limit configured</Text>
-        </View>
-      )}
-    </TouchableOpacity>
+        )}
+      </Animated.View>
+    </TouchableWithoutFeedback>
   );
 }
 

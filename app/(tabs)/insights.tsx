@@ -1,4 +1,4 @@
-// Stage 6, Tier 3: Insights screen hosting Month-in-Review narrative, Donut breakdown, and Trend charts.
+// Stage 7, Tier 4: Insights screen with Month Review, Donut Breakdown, Trend Chart, and Milestones.
 
 import React from "react";
 import {
@@ -9,14 +9,17 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AchievementsSection } from "../../components/insights/AchievementsSection";
 import { CategoryDonutChart } from "../../components/insights/CategoryDonutChart";
 import { MonthInReviewCard } from "../../components/insights/MonthInReviewCard";
 import { MonthlyTrendChart } from "../../components/insights/MonthlyTrendChart";
 import { CategoryIcon } from "../../components/shared/CategoryIcon";
 import { COLORS, TYPOGRAPHY } from "../../constants/theme";
+import { useAchievements } from "../../hooks/useAchievements";
 import { useCategoryBreakdown } from "../../hooks/useCategoryBreakdown";
 import { useMonthInReview } from "../../hooks/useMonthInReview";
 import { useMonthlyTrend } from "../../hooks/useMonthlyTrend";
+import { useStreakTracker } from "../../hooks/useStreakTracker";
 import { formatINR } from "../../lib/currency";
 
 export default function InsightsScreen() {
@@ -40,10 +43,17 @@ export default function InsightsScreen() {
     refreshReview,
   } = useMonthInReview();
 
+  const { streakInfo, refreshStreak } = useStreakTracker();
+  const { achievements, unlockedCount, refreshAchievements } = useAchievements(
+    streakInfo.currentStreak,
+  );
+
   const handleRefreshAll = () => {
     refreshBreakdown();
     refreshTrend();
     refreshReview();
+    refreshStreak();
+    refreshAchievements();
   };
 
   const isLoading = isBreakdownLoading || isTrendLoading || isReviewLoading;
@@ -78,7 +88,7 @@ export default function InsightsScreen() {
             {/* 6-Month Comparison Trajectory */}
             <MonthlyTrendChart summary={trendSummary} />
 
-            {/* Category Breakdown Breakdown List */}
+            {/* Category Distribution Breakdown List */}
             <View style={styles.listCard}>
               <Text style={styles.listTitle}>CATEGORY DISTRIBUTION</Text>
               {breakdown.map((item, index) => (
@@ -115,6 +125,12 @@ export default function InsightsScreen() {
                 </View>
               ))}
             </View>
+
+            {/* Milestones & Habits */}
+            <AchievementsSection
+              achievements={achievements}
+              unlockedCount={unlockedCount}
+            />
           </>
         ) : (
           <View style={styles.emptyState}>

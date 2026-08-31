@@ -1,4 +1,4 @@
-// Stage 3, Tier 1: Complete Home dashboard with summary header, sparkline, top categories, and quick add.
+// Stage 7, Tier 4: Home dashboard with inline streak badge, summary header, sparkline, and top categories.
 
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -11,6 +11,7 @@ import { QuickAddModal } from "../../components/transactions/QuickAddModal";
 import { COLORS } from "../../constants/theme";
 import { useDashboardSummary } from "../../hooks/useDashboardSummary";
 import { useSpendTrend } from "../../hooks/useSpendTrend";
+import { useStreakTracker } from "../../hooks/useStreakTracker";
 import { useTopCategories } from "../../hooks/useTopCategories";
 
 export default function HomeScreen() {
@@ -18,11 +19,13 @@ export default function HomeScreen() {
   const { summary, refreshSummary } = useDashboardSummary();
   const { trendData, maxSpend, refreshTrend } = useSpendTrend();
   const { topCategories, refreshTopCategories } = useTopCategories();
+  const { streakInfo, refreshStreak } = useStreakTracker();
 
   const handleRefreshAll = () => {
     refreshSummary();
     refreshTrend();
     refreshTopCategories();
+    refreshStreak();
   };
 
   useEffect(() => {
@@ -36,8 +39,8 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Hero Safe-To-Spend & Summary Header */}
-          <DashboardHeader summary={summary} />
+          {/* Hero Safe-To-Spend & Summary Header with Inline Streak Badge */}
+          <DashboardHeader summary={summary} streakInfo={streakInfo} />
 
           {/* 14-Day Spend Trajectory Sparkline */}
           <SpendTrendSparkline data={trendData} maxSpend={maxSpend} />
@@ -70,7 +73,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 8,
     paddingBottom: 90,
   },
 });

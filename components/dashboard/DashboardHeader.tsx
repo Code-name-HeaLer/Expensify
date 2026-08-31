@@ -1,23 +1,30 @@
-// Stage 3, Tier 1: Hero header displaying Safe-To-Spend metric and month budget progress.
+// Stage 7, Tier 4: Hero header displaying Safe-To-Spend metric, budget status, and inline streak badge.
 
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { COLORS, TYPOGRAPHY } from "../../constants/theme";
 import { DashboardSummary } from "../../hooks/useDashboardSummary";
+import { StreakInfo } from "../../hooks/useStreakTracker";
 import { formatINR } from "../../lib/currency";
+import { StreakBadge } from "./StreakBadge";
 
 interface DashboardHeaderProps {
   summary: DashboardSummary;
+  streakInfo?: StreakInfo;
 }
 
-export function DashboardHeader({ summary }: DashboardHeaderProps) {
+export function DashboardHeader({ summary, streakInfo }: DashboardHeaderProps) {
   const hasBudget = summary.totalBudget > 0;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.eyebrow}>
-        {hasBudget ? "SAFE TO SPEND TODAY" : "THIS MONTH’S SPEND"}
-      </Text>
+      {/* Top Row: Eyebrow + Inline Streak Badge */}
+      <View style={styles.topRow}>
+        <Text style={styles.eyebrow}>
+          {hasBudget ? "SAFE TO SPEND TODAY" : "THIS MONTH’S SPEND"}
+        </Text>
+        {streakInfo && <StreakBadge streakInfo={streakInfo} />}
+      </View>
 
       <Text style={[styles.heroAmount, TYPOGRAPHY.tabularNumbers]}>
         {hasBudget
@@ -70,7 +77,12 @@ export function DashboardHeader({ summary }: DashboardHeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 12,
+    paddingVertical: 8,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   eyebrow: {
     fontSize: 12,
@@ -87,12 +99,12 @@ const styles = StyleSheet.create({
   caption: {
     fontSize: 13,
     color: COLORS.textMuted,
-    marginTop: 4,
+    marginTop: 2,
   },
   pillsRow: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 16,
+    marginTop: 14,
   },
   pill: {
     flex: 1,
@@ -127,7 +139,7 @@ const styles = StyleSheet.create({
     height: 4,
     backgroundColor: COLORS.surfaceBorder,
     borderRadius: 2,
-    marginTop: 16,
+    marginTop: 14,
     overflow: "hidden",
   },
   progressFill: {

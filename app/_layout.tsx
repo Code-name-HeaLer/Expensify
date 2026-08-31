@@ -1,10 +1,11 @@
-// Stage 1, Tier 1: Root layout initializing SQLite database and dark theme container.
+// Stage 5, Tier 1: Root layout initializing SQLite database, evaluating recurring drafts, and providing dark theme container.
 
 import { Stack } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StatusBar, View } from "react-native";
 import { COLORS } from "../constants/theme";
 import { initDatabase } from "../lib/db";
+import { processDueRecurringTransactions } from "../lib/recurringScheduler";
 
 import "../global.css";
 
@@ -13,10 +14,16 @@ export default function RootLayout() {
 
   useEffect(() => {
     try {
+      // 1. Initialize SQLite schema & defaults
       initDatabase();
+      // 2. Check and auto-generate any recurring transactions due today
+      processDueRecurringTransactions();
       setIsDbReady(true);
     } catch (error) {
-      console.error("Failed to initialize database:", error);
+      console.error(
+        "Failed to initialize database or process recurring transactions:",
+        error,
+      );
     }
   }, []);
 

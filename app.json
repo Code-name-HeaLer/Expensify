@@ -1,40 +1,47 @@
 {
   "expo": {
-    "name": "expense-tracker",
+    "name": "ExpenseTracker",
     "slug": "expense-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "expensetracker",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0D0F12"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "userInterfaceStyle": "dark"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D0F12",
+        "monochromeImage": "./assets/monochrome-icon.png"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "package": "com.yourname.expensetracker"
     },
     "plugins": [
-      "expo-router",
-      "expo-sqlite"
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0D0F12",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#0D0F12",
+            "image": "./assets/splash-icon.png"
+          }
+        }
+      ]
     ],
-    "experiments": {
-      "typedRoutes": true
+    "extra": {
+      "eas": {
+        "projectId": "38cb77fc-61c0-47e7-bc61-d436bf9b8f6d"
+      }
     }
   }
 }
